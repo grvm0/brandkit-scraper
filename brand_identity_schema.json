@@ -144,6 +144,10 @@
             "type": "string",
             "description": "The identifier for the scenario (e.g., 'socialMedia', 'darkMode', 'holidayCampaign')."
           },
+          "description": {
+            "type": "string",
+            "description": "Why this scenario is relevant and what overrides might be expected."
+          },
           "brandName": {
             "type": "string",
             "description": "Override for the brand name in this scenario."

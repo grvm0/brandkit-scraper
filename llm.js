@@ -15,7 +15,11 @@ const textSchema = z.object({
   toneOfVoice: z.object({
     defaultStyle: z.array(z.string()).describe("3-5 adjectives describing the tone"),
     doNotUse: z.array(z.string()).describe("3-5 words or phrases they would NEVER say")
-  })
+  }),
+  suggestedScenarios: z.array(z.object({
+    name: z.string().describe("A camelCase identifier for a relevant customization scenario (e.g., 'orderSupport', 'socialMediaPromo', 'enterprisePitch')"),
+    description: z.string().describe("Why this scenario makes sense for this brand and what tone might override the default.")
+  })).describe("3-5 potential scenarios where this specific brand might need custom tone or visual overrides based on their industry.")
 });
 
 /**
@@ -26,7 +30,7 @@ export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL) {
   
   const prompt = `
     You are an expert brand strategist. Analyze the following text extracted from the website ${url}.
-    Determine the brand's core mission statement and their tone of voice.
+    Determine the brand's core mission statement, their tone of voice, and suggest 3-5 scenarios where they might need customized brand guidelines (e.g., if they are e-commerce, maybe 'orderSupport' or 'abandonedCartEmail').
     
     Website Text:
     ${text}

@@ -84,7 +84,10 @@ export async function scrapeBrandData(url) {
       defaultStyle: llmTextData?.toneOfVoice?.defaultStyle || [],
       doNotUse: llmTextData?.toneOfVoice?.doNotUse || []
     },
-    scenarios: [] // Empty by default, can be customized later
+    scenarios: (llmTextData?.suggestedScenarios || []).map(scenario => ({
+      name: scenario.name,
+      description: scenario.description
+    }))
   };
 
   // 7. Validate output

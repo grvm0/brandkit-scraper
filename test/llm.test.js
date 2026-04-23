@@ -14,7 +14,10 @@ vi.mock('ai', () => ({
           toneOfVoice: {
             defaultStyle: ["friendly", "professional"],
             doNotUse: ["slang"]
-          }
+          },
+          suggestedScenarios: [
+            { name: "orderSupport", description: "Overrides for customer service emails." }
+          ]
         }
       };
     } else if (prompt.includes('hero images')) {
