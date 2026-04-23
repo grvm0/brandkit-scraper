@@ -96,8 +96,8 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     process.exit(1);
   }
   
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("WARNING: GEMINI_API_KEY not found in environment. LLM analysis will fail.");
+  if (!process.env.LLM_API_KEY) {
+    console.error("WARNING: LLM_API_KEY not found in environment. LLM analysis will fail.");
   }
 
   scrapeBrandData(testUrl).then(data => {

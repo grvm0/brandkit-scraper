@@ -1,14 +1,21 @@
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Universal LLM client configuration
+const openai = new OpenAI({
+  apiKey: process.env.LLM_API_KEY,
+  // baseURL can be set to OpenRouter, Groq, Together, Ollama, etc.
+  baseURL: process.env.LLM_BASE_URL || 'https://api.openai.com/v1',
+});
+
+const DEFAULT_MODEL = process.env.LLM_MODEL || 'gpt-4o';
 
 /**
- * Uses Gemini to analyze text for tone of voice and mission
+ * Uses a universal LLM to analyze text for tone of voice and mission
  */
-export async function analyzeTextWithLLM(text, url, modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash') {
-  console.log('Analyzing text content with Gemini...');
+export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL) {
+  console.log(`Analyzing text content with model: ${modelName}...`);
   const prompt = `
     You are an expert brand strategist. Analyze the following text extracted from the website ${url}.
     Determine the brand's core mission statement and their tone of voice.
@@ -29,12 +36,13 @@ export async function analyzeTextWithLLM(text, url, modelName = process.env.GEMI
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await openai.chat.completions.create({
       model: modelName,
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.2
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.choices[0].message.content);
   } catch (err) {
     console.error("Text analysis failed:", err);
     return null;
@@ -42,17 +50,17 @@ export async function analyzeTextWithLLM(text, url, modelName = process.env.GEMI
 }
 
 /**
- * Uses Gemini to analyze images for visual style
+ * Uses a universal LLM to analyze images for visual style
  */
-export async function analyzeImagesWithLLM(imageUrls, modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash') {
+export async function analyzeImagesWithLLM(imageUrls, modelName = DEFAULT_MODEL) {
   if (!imageUrls || imageUrls.length === 0) return null;
-  console.log(`Analyzing ${imageUrls.length} images with Gemini Vision...`);
+  console.log(`Analyzing ${imageUrls.length} images with model: ${modelName}...`);
   
   const prompt = `
     You are an expert art director. I am providing you with descriptions/URLs of hero images from a brand's website.
     URLs: ${imageUrls.join(', ')}
     
-    If you cannot view them, infer the likely style based on standard web practices.
+    If you cannot view them, infer the likely style based on standard web practices for this industry.
     Analyze the imagery style including vibe, color grading, and composition.
     
     Respond in strict JSON format matching exactly this schema:
@@ -64,12 +72,13 @@ export async function analyzeImagesWithLLM(imageUrls, modelName = process.env.GE
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await openai.chat.completions.create({
       model: modelName,
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.2
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.choices[0].message.content);
   } catch (err) {
     console.error("Image analysis failed:", err);
     return null;

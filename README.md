@@ -13,14 +13,14 @@ The project utilizes a hybrid extraction approach, splitting the workload betwee
 - **`extractor.js`**: Handles the quantitative web parsing:
   - **Cheerio** is used for ultra-fast, static extraction of metadata (`<title>`, `<meta>`), assets (logos, favicons), and stripping out noise to get readable text.
   - **Playwright** is used for dynamic extraction. It launches a headless browser to evaluate the *actual* computed CSS styles (`window.getComputedStyle`) rendered by the browser, accurately capturing Hex colors and Typography, bypassing the need to parse raw `.css` files.
-- **`llm.js`**: Houses the Generative AI logic using the official `@google/genai` SDK. It passes the raw readable text and largest non-logo images to the Gemini API to synthesize qualitative brand data (mission, tone of voice, visual imagery style).
+- **`llm.js`**: Houses the Generative AI logic using the official `openai` SDK configured as a universal adapter. By overriding the `baseURL`, it can pass the raw readable text and largest non-logo images to *any* online model (OpenAI, OpenRouter, Groq, Local Models) to synthesize qualitative brand data (mission, tone of voice, visual imagery style).
 
 ### Data Flow
 
 1. **Input**: A target website URL is provided to `scraper.js`.
 2. **Static Pass**: `extractor.js` parses the raw HTML to extract the brand name, logo, favicon, and clean body text.
 3. **Dynamic Pass**: `extractor.js` uses Playwright to sample DOM elements (`h1`, `button`, etc.) and extracts the computed primary/secondary colors and font families. It also finds the largest hero/product images.
-4. **AI Synthesis**: `llm.js` takes the text and images and prompts Gemini (defaulting to `gemini-2.5-flash`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
+4. **AI Synthesis**: `llm.js` takes the text and images and prompts the configured LLM (defaulting to `gpt-4o`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
 5. **Output**: A strict `brand_kit.json` file is generated, matching the definitions in `brand_identity_schema.json`.
 
 ## The Schema (`brand_identity_schema.json`)
@@ -35,7 +35,7 @@ The output is governed by a strict JSON schema that supports:
 
 ### Prerequisites
 - Node.js (v18+ recommended)
-- A Google Gemini API Key
+- An LLM API Key (OpenAI, OpenRouter, Groq, Together, etc.)
 
 ### Installation
 
@@ -44,9 +44,9 @@ The output is governed by a strict JSON schema that supports:
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root directory and add your Gemini API Key:
+3. Create a `.env` file in the root directory and add your universal API Key (defaults to OpenAI):
    ```env
-   GEMINI_API_KEY="your_api_key_here"
+   LLM_API_KEY="your_api_key_here"
    ```
 
 ### Usage
@@ -59,11 +59,17 @@ npm start https://example.com
 
 The script will launch a headless browser, run the extraction pipeline, and output the result to a local `brand_kit.json` file.
 
-### Switching AI Models
+### Switching AI Models & Providers (Universal Adapter)
 
-By default, the scraper uses `gemini-2.5-flash`. You can easily switch to a more powerful model (like `gemini-2.5-pro`) using an environment variable without changing any code:
+Because the project uses the OpenAI SDK as a universal adapter, you can easily switch to *any* online model (Claude, Gemini, Llama, DeepSeek) by pointing to a service like OpenRouter, Groq, or a local server.
+
+Set the following environment variables in your `.env` file or terminal:
 
 ```bash
-export GEMINI_MODEL="gemini-2.5-pro"
+# Example: Using Claude 3 Haiku via OpenRouter
+export LLM_BASE_URL="https://openrouter.ai/api/v1"
+export LLM_API_KEY="your_openrouter_api_key"
+export LLM_MODEL="anthropic/claude-3-haiku"
+
 npm start https://example.com
 ```
