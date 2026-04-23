@@ -3,6 +3,7 @@ import fs from 'fs';
 import { extractDesignTokens, extractStaticData } from './extractor.js';
 import { analyzeTextWithLLM, analyzeImagesWithLLM } from './llm.js';
 import { validateBrandKit } from './validator.js';
+import { evaluateBrandKit } from './evaluator.js';
 
 /**
  * Main scraping function that orchestrates the modular extraction and analysis
@@ -104,8 +105,17 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     console.error("WARNING: LLM_API_KEY not found in environment. LLM analysis will fail.");
   }
 
-  scrapeBrandData(testUrl).then(data => {
+  scrapeBrandData(testUrl).then(async data => {
     fs.writeFileSync('brand_kit.json', JSON.stringify(data, null, 2));
     console.log('Extraction complete. Saved to brand_kit.json');
+    
+    // 8. Semantic Evaluation
+    const evaluation = await evaluateBrandKit(data);
+    if (evaluation) {
+      fs.writeFileSync('brand_kit_evaluation.json', JSON.stringify(evaluation, null, 2));
+      console.log('Semantic evaluation complete. Saved to brand_kit_evaluation.json');
+      console.log(`Overall Rating: ${evaluation.overallRating}`);
+      console.log(`Summary: ${evaluation.summary}`);
+    }
   }).catch(console.error);
 }
