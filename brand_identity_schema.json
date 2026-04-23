@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrandIdentitySystem",
+  "description": "A comprehensive schema designed for an LLM to extract and structure a brand's identity from their website content, CSS, and metadata. Uses camelCase standardization for code compatibility.",
+  "type": "object",
+  "required": ["brandName", "metadata", "visualIdentity", "toneOfVoice"],
+  "properties": {
+    "brandName": {
+      "type": "string",
+      "description": "The official name of the brand or company."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Core strategic information about the company.",
+      "required": ["mission", "description", "industry"],
+      "properties": {
+        "mission": {
+          "type": "string",
+          "description": "The core mission statement of the brand. If not explicitly stated, synthesize their primary goal or purpose based on their 'About Us' or homepage content. This will be used to align future generated content with their goals."
+        },
+        "description": {
+          "type": "string",
+          "description": "A concise, 1-2 sentence description of what the company does and who they serve."
+        },
+        "industry": {
+          "type": "string",
+          "description": "The primary industry the company operates in (e.g., SaaS, Healthcare, E-commerce, Fintech)."
+        }
+      }
+    },
+    "visualIdentity": {
+      "type": "object",
+      "description": "Quantitative design tokens representing the brand's visual aesthetic. Extracted primarily from CSS custom properties and computed styles.",
+      "required": ["colors", "typography", "assets"],
+      "properties": {
+        "colors": {
+          "type": "object",
+          "description": "The brand's color palette. Provide valid Hex codes.",
+          "properties": {
+            "primary": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+              "description": "The main colors used for key actions, brand logos, and major highlights. Usually 1-2 colors."
+            },
+            "secondary": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+              "description": "Supporting colors used for backgrounds, secondary buttons, or accents."
+            },
+            "text": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+              "description": "Colors used for primary and secondary text/paragraphs. Often dark grays or near-blacks."
+            },
+            "background": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+              "description": "Colors used for page and container backgrounds. Often whites, off-whites, or very dark colors for dark mode."
+            }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "description": "The font families used by the brand.",
+          "properties": {
+            "headings": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Font family used for h1, h2, h3 tags (e.g., ['Inter', 'sans-serif'])."
+            },
+            "body": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Font family used for standard paragraph text."
+            }
+          }
+        },
+        "assets": {
+          "type": "object",
+          "description": "URLs to core visual assets.",
+          "properties": {
+            "logoUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "Absolute URL to the brand's primary logo (preferably SVG or high-res PNG)."
+            },
+            "faviconUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "Absolute URL to the website's favicon."
+            }
+          }
+        },
+        "imageryStyle": {
+          "type": "object",
+          "description": "Guidelines on the style of photography, illustrations, and other non-logo images used by the brand.",
+          "properties": {
+            "vibe": {
+              "type": "string",
+              "description": "A description of the overall feeling of the imagery (e.g., 'minimalist product photography', 'colorful 3D illustrations', 'candid office lifestyle')."
+            },
+            "colorGrading": {
+              "type": "string",
+              "description": "The color treatment of the images (e.g., 'warm and highly saturated', 'cool and muted', 'black and white')."
+            },
+            "composition": {
+              "type": "string",
+              "description": "How the subjects are framed (e.g., 'subject centered with lots of negative space', 'dense collages')."
+            },
+            "sampleImageUrls": {
+              "type": "array",
+              "items": { "type": "string", "format": "uri" },
+              "description": "An array of URLs pointing to 2-3 images that best represent this brand's imagery style."
+            }
+          }
+        }
+      }
+    },
+    "toneOfVoice": {
+      "type": "object",
+      "description": "Guidelines on how the brand communicates verbally. Derived by analyzing the website's copywriting.",
+      "required": ["defaultStyle", "doNotUse"],
+      "properties": {
+        "defaultStyle": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "3-5 adjectives that describe the brand's primary tone (e.g., 'authoritative', 'empathetic', 'playful', 'concise')."
+        },
+        "doNotUse": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "3-5 words or phrases that represent an anti-pattern for the brand. What would they *never* say? (e.g., if the brand is professional, 'cheap' or 'hack' might be banned. If the brand is simple, complex jargon might be banned)."
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "description": "An array of customizable, context-specific overrides for tone of voice and visual identity.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The identifier for the scenario (e.g., 'socialMedia', 'darkMode', 'holidayCampaign')."
+          },
+          "brandName": {
+            "type": "string",
+            "description": "Override for the brand name in this scenario."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Override for metadata in this scenario.",
+            "properties": {
+              "mission": { "type": "string" },
+              "description": { "type": "string" },
+              "industry": { "type": "string" }
+            }
+          },
+          "visualIdentity": {
+            "type": "object",
+            "description": "Overrides to the default visual identity for this scenario. Only provide fields that change.",
+            "properties": {
+              "colors": {
+                "type": "object",
+                "properties": {
+                  "primary": { "type": "array", "items": { "type": "string" } },
+                  "secondary": { "type": "array", "items": { "type": "string" } },
+                  "text": { "type": "array", "items": { "type": "string" } },
+                  "background": { "type": "array", "items": { "type": "string" } }
+                }
+              },
+              "typography": { "type": "object" },
+              "assets": { "type": "object" },
+              "imageryStyle": { "type": "object" }
+            }
+          },
+          "toneOfVoice": {
+            "type": "object",
+            "description": "Overrides to the default tone of voice for this scenario. Only provide fields that change.",
+            "properties": {
+              "defaultStyle": { "type": "array", "items": { "type": "string" } },
+              "doNotUse": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}
