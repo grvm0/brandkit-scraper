@@ -5,16 +5,19 @@
   "main": "scraper.js",
   "type": "module",
   "scripts": {
-    "start": "node scraper.js"
+    "start": "node scraper.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.51",
     "@ai-sdk/google": "^0.0.52",
     "@ai-sdk/openai": "^0.0.66",
     "ai": "^3.4.15",
-    "zod": "^3.23.8",
+    "ajv": "^8.13.0",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.5",
-    "playwright": "^1.43.1"
+    "playwright": "^1.43.1",
+    "vitest": "^1.6.0",
+    "zod": "^3.23.8"
   }
 }

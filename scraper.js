@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import { extractDesignTokens, extractStaticData } from './extractor.js';
 import { analyzeTextWithLLM, analyzeImagesWithLLM } from './llm.js';
+import { validateBrandKit } from './validator.js';
 
 /**
  * Main scraping function that orchestrates the modular extraction and analysis
@@ -84,6 +85,9 @@ export async function scrapeBrandData(url) {
     },
     scenarios: [] // Empty by default, can be customized later
   };
+
+  // 7. Validate output
+  validateBrandKit(brandKit);
 
   return brandKit;
 }
