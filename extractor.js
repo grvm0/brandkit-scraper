@@ -9,13 +9,22 @@ export async function extractDesignTokens(page) {
     const colors = new Set();
     const fonts = { headings: new Set(), body: new Set() };
 
+    const rgbToHex = (rgb) => {
+      const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/);
+      if (!match) return rgb;
+      const r = parseInt(match[1], 10);
+      const g = parseInt(match[2], 10);
+      const b = parseInt(match[3], 10);
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    };
+
     elementsToSample.forEach(selector => {
       const elements = document.querySelectorAll(selector);
       const sampleSize = Math.min(elements.length, 5);
       for (let i = 0; i < sampleSize; i++) {
         const style = window.getComputedStyle(elements[i]);
-        if (style.color && style.color !== 'rgba(0, 0, 0, 0)') colors.add(style.color);
-        if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') colors.add(style.backgroundColor);
+        if (style.color && style.color !== 'rgba(0, 0, 0, 0)') colors.add(rgbToHex(style.color));
+        if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') colors.add(rgbToHex(style.backgroundColor));
         
         if (['h1', 'h2', 'h3'].includes(selector)) {
           fonts.headings.add(style.fontFamily);
@@ -25,12 +34,22 @@ export async function extractDesignTokens(page) {
       }
     });
 
+    const images = Array.from(document.querySelectorAll('img'))
+      .map(img => img.src)
+      .filter(src => src && !src.toLowerCase().includes('logo') && !src.toLowerCase().includes('icon'));
+
     return {
-      colors: Array.from(colors),
+      colors: {
+        primary: Array.from(colors),
+        secondary: [],
+        text: [],
+        background: []
+      },
       typography: {
         headings: Array.from(fonts.headings),
         body: Array.from(fonts.body)
-      }
+      },
+      heroImages: images.slice(0, 5)
     };
   });
 }

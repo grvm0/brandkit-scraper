@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { scrapeBrandData } from '../scraper.js';
 import * as extractor from '../extractor.js';
 import * as llm from '../llm.js';
@@ -59,6 +59,10 @@ global.fetch = vi.fn(() =>
 );
 
 describe('Scraper Orchestrator (scraper.js)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should properly fallback to staticData if dynamicData is missing properties', async () => {
     // 1. Setup the mocks to simulate the exact edge case the user pointed out
     // Make dynamicData missing colors, but staticData has it.
@@ -83,7 +87,7 @@ describe('Scraper Orchestrator (scraper.js)', () => {
     
     // The visualIdentity should successfully fallback to the staticData colors
     expect(result.brandKit.visualIdentity.colors.primary).toContain('#000000');
-    expect(result.brandKit.visualIdentity.assets.logoUrl).toBe('/logo.png');
+    expect(result.brandKit.visualIdentity.assets.logoUrl).toBe('https://example.com/logo.png');
   });
 
   it('should handle the agentic loop correctly if evaluation fails initially', async () => {

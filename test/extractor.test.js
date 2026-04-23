@@ -76,11 +76,17 @@ describe('Extractor Module', () => {
       
       const tokens = await extractDesignTokens(page);
 
+      // Verify the exact shape of the returned object to prevent regressions
+      expect(tokens).toHaveProperty('colors');
+      expect(tokens).toHaveProperty('typography');
+      expect(tokens).toHaveProperty('heroImages');
+      expect(Array.isArray(tokens.heroImages)).toBe(true);
+
       // Colors should include red, green, white, and off-white background
-      expect(tokens.colors).toContain('rgb(255, 0, 0)');
-      expect(tokens.colors).toContain('rgb(0, 128, 0)');
-      expect(tokens.colors).toContain('rgb(255, 255, 255)');
-      expect(tokens.colors).toContain('rgb(250, 250, 250)');
+      expect(tokens.colors.primary).toContain('#ff0000');
+      expect(tokens.colors.primary).toContain('#008000');
+      expect(tokens.colors.primary).toContain('#ffffff');
+      expect(tokens.colors.primary).toContain('#fafafa');
 
       // Fonts
       const headingFonts = tokens.typography.headings.join(', ');

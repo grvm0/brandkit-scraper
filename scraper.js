@@ -43,9 +43,17 @@ export async function scrapeBrandData(url) {
   while (attempt <= MAX_RETRIES) {
     console.log(`\n--- Synthesis Attempt ${attempt + 1}/${MAX_RETRIES + 1} ---`);
     
-    // 5. LLM Synthesis with optional QA feedback
+    const heroImages = dynamicData?.heroImages || [];
     const llmTextData = await analyzeTextWithLLM(staticData.readableText, url, process.env.LLM_MODEL, textFeedback);
-    const llmImageData = await analyzeImagesWithLLM(dynamicData.heroImages, process.env.LLM_MODEL, imageFeedback);
+    const llmImageData = await analyzeImagesWithLLM(heroImages, process.env.LLM_MODEL, imageFeedback);
+
+    const resolveUrl = (path, base) => {
+      try {
+        return path ? new URL(path, base).href : "";
+      } catch (e) {
+        return path || "";
+      }
+    };
 
     // 6. Assemble the structured JSON Payload
     currentBrandKit = {
@@ -59,14 +67,14 @@ export async function scrapeBrandData(url) {
         colors: dynamicData?.colors || staticData?.colors || { primary: [], secondary: [], text: [], background: [] },
         typography: dynamicData?.typography || staticData?.typography || { headings: [], body: [] },
         assets: {
-          logoUrl: staticData?.logoUrl || dynamicData?.logoUrl || "",
-          faviconUrl: staticData?.faviconUrl || dynamicData?.faviconUrl || ""
+          logoUrl: resolveUrl(staticData?.logoUrl || dynamicData?.logoUrl, url),
+          faviconUrl: resolveUrl(staticData?.faviconUrl || dynamicData?.faviconUrl, url)
         },
         imageryStyle: {
           vibe: llmImageData?.vibe || "Unknown",
           colorGrading: llmImageData?.colorGrading || "Unknown",
           composition: llmImageData?.composition || "Unknown",
-          sampleImageUrls: dynamicData.heroImages.slice(0, 3)
+          sampleImageUrls: heroImages.slice(0, 3).map(imgUrl => resolveUrl(imgUrl, url))
         }
       },
       toneOfVoice: {
