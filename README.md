@@ -13,29 +13,21 @@ The project utilizes a hybrid extraction approach, splitting the workload betwee
 - **`extractor.js`**: Handles the quantitative web parsing:
   - **Cheerio** is used for ultra-fast, static extraction of metadata (`<title>`, `<meta>`), assets (logos, favicons), and stripping out noise to get readable text.
   - **Playwright** is used for dynamic extraction. It launches a headless browser to evaluate the *actual* computed CSS styles (`window.getComputedStyle`) rendered by the browser, accurately capturing Hex colors and Typography, bypassing the need to parse raw `.css` files.
-- **`llm.js`**: Houses the Generative AI logic using the official `openai` SDK configured as a universal adapter. By overriding the `baseURL`, it can pass the raw readable text and largest non-logo images to *any* online model (OpenAI, OpenRouter, Groq, Local Models) to synthesize qualitative brand data (mission, tone of voice, visual imagery style).
+- **`llm.js`**: Houses the Generative AI logic using the **Vercel AI SDK**. It dynamically routes requests to native SDK providers (OpenAI, Anthropic, Google) or local models, generating perfectly structured JSON using Zod schemas.
 
 ### Data Flow
 
 1. **Input**: A target website URL is provided to `scraper.js`.
 2. **Static Pass**: `extractor.js` parses the raw HTML to extract the brand name, logo, favicon, and clean body text.
 3. **Dynamic Pass**: `extractor.js` uses Playwright to sample DOM elements (`h1`, `button`, etc.) and extracts the computed primary/secondary colors and font families. It also finds the largest hero/product images.
-4. **AI Synthesis**: `llm.js` takes the text and images and prompts the configured LLM (defaulting to `gpt-4o`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
+4. **AI Synthesis**: `llm.js` takes the text and images and uses `generateObject` to prompt the configured LLM (defaulting to `gpt-4o`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
 5. **Output**: A strict `brand_kit.json` file is generated, matching the definitions in `brand_identity_schema.json`.
-
-## The Schema (`brand_identity_schema.json`)
-
-The output is governed by a strict JSON schema that supports:
-- **Strategic Foundation**: Brand Name, Mission, Industry.
-- **Visual Identity**: Colors (Hex), Typography, Assets, Imagery Style (Vibe, Composition).
-- **Tone of Voice**: Default style descriptors and anti-patterns ("do not use").
-- **Scenarios**: A powerful array allowing for deep-merge overrides of ANY property based on context (e.g., `socialMedia`, `darkMode`, `holidayCampaign`).
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v18+ recommended)
-- An LLM API Key (OpenAI, OpenRouter, Groq, Together, etc.)
+- At least one LLM API Key (OpenAI, Anthropic, or Google Gemini)
 
 ### Installation
 
@@ -44,9 +36,11 @@ The output is governed by a strict JSON schema that supports:
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root directory and add your universal API Key (defaults to OpenAI):
+3. Create a `.env` file in the root directory and add your preferred API Key(s):
    ```env
-   LLM_API_KEY="your_api_key_here"
+   OPENAI_API_KEY="your_openai_api_key"
+   ANTHROPIC_API_KEY="your_anthropic_api_key"
+   GEMINI_API_KEY="your_gemini_api_key"
    ```
 
 ### Usage
@@ -57,19 +51,26 @@ Run the scraper by passing a target URL:
 npm start https://example.com
 ```
 
-The script will launch a headless browser, run the extraction pipeline, and output the result to a local `brand_kit.json` file.
+## Switching AI Models & Providers (Universal SDK)
 
-### Switching AI Models & Providers (Universal Adapter)
+Because the project uses the **Vercel AI SDK**, you can easily swap between providers by just providing the model name via the `LLM_MODEL` environment variable. The code natively routes to the correct provider.
 
-Because the project uses the OpenAI SDK as a universal adapter, you can easily switch to *any* online model (Claude, Gemini, Llama, DeepSeek) by pointing to a service like OpenRouter, Groq, or a local server.
-
-Set the following environment variables in your `.env` file or terminal:
-
+### Example: Using Anthropic Claude natively
 ```bash
-# Example: Using Claude 3 Haiku via OpenRouter
-export LLM_BASE_URL="https://openrouter.ai/api/v1"
-export LLM_API_KEY="your_openrouter_api_key"
-export LLM_MODEL="anthropic/claude-3-haiku"
+export LLM_MODEL="claude-3-5-sonnet-20240620"
+npm start https://example.com
+```
 
+### Example: Using Google Gemini natively
+```bash
+export LLM_MODEL="gemini-1.5-pro"
+npm start https://example.com
+```
+
+### Example: Using Local Models (Ollama, LM Studio)
+You can point the OpenAI provider to any custom `baseURL` to interact with local, open-source models:
+```bash
+export LLM_BASE_URL="http://localhost:11434/v1"
+export LLM_MODEL="llama3"
 npm start https://example.com
 ```
