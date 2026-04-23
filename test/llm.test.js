@@ -64,4 +64,13 @@ describe('LLM Module', () => {
     const result = await analyzeImagesWithLLM([]);
     expect(result).toBeNull();
   });
+
+  it('should append feedback to the prompt when provided', async () => {
+    const aiModule = await import('ai');
+    await analyzeTextWithLLM('Sample text', 'https://example.com', 'mock-model', 'Fix the mission statement');
+    
+    const generateObjectCallArgs = aiModule.generateObject.mock.calls[aiModule.generateObject.mock.calls.length - 1][0];
+    expect(generateObjectCallArgs.prompt).toContain('PREVIOUS QA FEEDBACK');
+    expect(generateObjectCallArgs.prompt).toContain('Fix the mission statement');
+  });
 });

@@ -22,8 +22,9 @@ The project utilizes a hybrid extraction approach, splitting the workload betwee
 3. **Dynamic Pass**: `extractor.js` uses Playwright to sample DOM elements (`h1`, `button`, etc.) and extracts the computed primary/secondary colors and font families. It also finds the largest hero/product images.
 4. **AI Synthesis**: `llm.js` takes the text and images and uses `generateObject` to prompt the configured LLM (defaulting to `gpt-4o`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
 5. **Validation**: `validator.js` runs a strict structural check against the JSON schema using Ajv.
-6. **Semantic Evaluation**: `evaluator.js` uses a *secondary* LLM model (defaulting to `claude-3-5-sonnet-20240620`) to review the extracted `brand_kit.json` and grade it ('OK', 'NEEDS_REVIEW', 'FAIL') with rationales.
-7. **Output**: Both `brand_kit.json` and `brand_kit_evaluation.json` are saved to disk.
+6. **Agentic Semantic Evaluation**: `evaluator.js` uses a *secondary* LLM model (defaulting to `claude-3-5-sonnet-20240620`) to review the extracted `brand_kit.json` and grade it ('OK', 'NEEDS_REVIEW', 'FAIL').
+7. **Self-Correction Loop**: If the evaluator flags issues, the orchestration script automatically pipes those specific critiques back to the synthesis LLM for a retry. This loop continues until it receives an 'OK' rating or hits the `MAX_EVAL_RETRIES` limit.
+8. **Output**: Both `brand_kit.json` and `brand_kit_evaluation.json` are saved to disk.
 
 ## Getting Started
 
@@ -69,11 +70,12 @@ export LLM_MODEL="gemini-1.5-pro"
 npm start https://example.com
 ```
 
-### Overriding the Evaluation Model
-By default, the scraper uses `claude-3-5-sonnet-20240620` to semantically evaluate the output. It is highly recommended to use a *different* model for evaluation than you did for extraction to prevent bias.
+### Overriding the Evaluation Model & Retry Limits
+By default, the scraper uses `claude-3-5-sonnet-20240620` to semantically evaluate the output and provides feedback up to 2 times. You can change the model and the max retry limit:
 ```bash
 export LLM_MODEL="gpt-4o"
 export LLM_EVAL_MODEL="claude-3-5-sonnet-20240620"
+export MAX_EVAL_RETRIES="3"
 npm start https://example.com
 ```
 

@@ -25,16 +25,25 @@ const textSchema = z.object({
 /**
  * Uses Vercel AI SDK to analyze text for tone of voice and mission
  */
-export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL) {
+export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL, feedback = "") {
   console.log(`Analyzing text content with model: ${modelName}...`);
   
-  const prompt = `
+  let prompt = `
     You are an expert brand strategist. Analyze the following text extracted from the website ${url}.
     Determine the brand's core mission statement, their tone of voice, and suggest 3-5 scenarios where they might need customized brand guidelines (e.g., if they are e-commerce, maybe 'orderSupport' or 'abandonedCartEmail').
     
     Website Text:
     ${text}
   `;
+
+  if (feedback) {
+    prompt += `
+    
+    PREVIOUS QA FEEDBACK:
+    You previously attempted this extraction, but a QA evaluator found the following issues. Please ensure you fix them in this attempt:
+    ${feedback}
+    `;
+  }
 
   try {
     const { object } = await generateObject({
@@ -60,17 +69,26 @@ const imageSchema = z.object({
 /**
  * Uses Vercel AI SDK to analyze images for visual style
  */
-export async function analyzeImagesWithLLM(imageUrls, modelName = DEFAULT_MODEL) {
+export async function analyzeImagesWithLLM(imageUrls, modelName = DEFAULT_MODEL, feedback = "") {
   if (!imageUrls || imageUrls.length === 0) return null;
   console.log(`Analyzing ${imageUrls.length} images with model: ${modelName}...`);
   
-  const prompt = `
+  let prompt = `
     You are an expert art director. I am providing you with descriptions/URLs of hero images from a brand's website.
     URLs: ${imageUrls.join(', ')}
     
     If you cannot view them, infer the likely style based on standard web practices for this industry.
     Analyze the imagery style including vibe, color grading, and composition.
   `;
+
+  if (feedback) {
+    prompt += `
+    
+    PREVIOUS QA FEEDBACK:
+    You previously attempted this extraction, but a QA evaluator found the following issues. Please ensure you fix them in this attempt:
+    ${feedback}
+    `;
+  }
 
   try {
     const { object } = await generateObject({
