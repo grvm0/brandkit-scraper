@@ -1,7 +1,7 @@
-import { generateObject } from 'ai';
 import { z } from 'zod';
 import dotenv from 'dotenv';
-import { getModel } from './llm-provider.js';
+import { getModel, safeGenerateObject } from './llm-provider.js';
+import { logLLMCall } from './logger.js';
 dotenv.config();
 
 // Default model if none specified
@@ -32,6 +32,25 @@ export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL, f
     You are an expert brand strategist. Analyze the following text extracted from the website ${url}.
     Determine the brand's core mission statement, their tone of voice, and suggest 3-5 scenarios where they might need customized brand guidelines (e.g., if they are e-commerce, maybe 'orderSupport' or 'abandonedCartEmail').
     
+    CRITICAL INSTRUCTION: You must return ONLY a raw JSON object matching the requested schema. Do NOT wrap your response in markdown code blocks (\`\`\`json). Just return the raw JSON.
+    
+    The JSON object must have EXACTLY this structure:
+    {
+      "mission": "String",
+      "description": "String",
+      "industry": "String",
+      "toneOfVoice": {
+        "defaultStyle": ["String"],
+        "doNotUse": ["String"]
+      },
+      "suggestedScenarios": [
+        {
+          "name": "String",
+          "description": "String"
+        }
+      ]
+    }
+    
     Website Text:
     ${text}
   `;
@@ -46,15 +65,17 @@ export async function analyzeTextWithLLM(text, url, modelName = DEFAULT_MODEL, f
   }
 
   try {
-    const { object } = await generateObject({
+    const { object } = await safeGenerateObject({
       model: getModel(modelName),
       schema: textSchema,
       prompt: prompt,
       temperature: 0.2
     });
+    logLLMCall("analyzeTextWithLLM", modelName, prompt, object);
     return object;
   } catch (err) {
     console.error("Text analysis failed:", err);
+    logLLMCall("analyzeTextWithLLM", modelName, prompt, null, err);
     return null;
   }
 }
@@ -69,16 +90,25 @@ const imageSchema = z.object({
 /**
  * Uses Vercel AI SDK to analyze images for visual style
  */
-export async function analyzeImagesWithLLM(imageUrls, modelName = DEFAULT_MODEL, feedback = "") {
-  if (!imageUrls || imageUrls.length === 0) return null;
-  console.log(`Analyzing ${imageUrls.length} images with model: ${modelName}...`);
+export async function analyzeImagesWithLLM(heroImages, modelName = DEFAULT_MODEL, feedback = "") {
+  if (!heroImages || heroImages.length === 0) return null;
+  console.log(`Analyzing ${heroImages.length} images with model: ${modelName}...`);
   
   let prompt = `
     You are an expert art director. I am providing you with descriptions/URLs of hero images from a brand's website.
-    URLs: ${imageUrls.join(', ')}
+    Urls or descriptions: ${heroImages.join(', ')}
     
     If you cannot view them, infer the likely style based on standard web practices for this industry.
     Analyze the imagery style including vibe, color grading, and composition.
+    
+    CRITICAL INSTRUCTION: You must return ONLY a raw JSON object matching the requested schema. Do NOT wrap your response in markdown code blocks (\`\`\`json). Just return the raw JSON.
+    
+    The JSON object must have EXACTLY this structure:
+    {
+      "vibe": "String",
+      "colorGrading": "String",
+      "composition": "String"
+    }
   `;
 
   if (feedback) {
@@ -91,15 +121,17 @@ export async function analyzeImagesWithLLM(imageUrls, modelName = DEFAULT_MODEL,
   }
 
   try {
-    const { object } = await generateObject({
+    const { object } = await safeGenerateObject({
       model: getModel(modelName),
       schema: imageSchema,
       prompt: prompt,
       temperature: 0.2
     });
+    logLLMCall("analyzeImagesWithLLM", modelName, prompt, object);
     return object;
   } catch (err) {
     console.error("Image analysis failed:", err);
+    logLLMCall("analyzeImagesWithLLM", modelName, prompt, null, err);
     return null;
   }
 }

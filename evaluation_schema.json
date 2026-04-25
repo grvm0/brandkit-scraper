@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrandKitEvaluation",
+  "description": "Schema for semantically evaluating an extracted Brand Kit.",
+  "type": "object",
+  "required": ["evaluations", "overallRating", "summary"],
+  "properties": {
+    "evaluations": {
+      "type": "array",
+      "description": "A list of evaluations for individual properties extracted from the brand kit.",
+      "items": {
+        "type": "object",
+        "required": ["property", "extractedContent", "rating", "rationale"],
+        "properties": {
+          "property": {
+            "type": "string",
+            "description": "The dot-notation path of the property evaluated (e.g., 'toneOfVoice.defaultStyle')."
+          },
+          "extractedContent": {
+            "description": "The actual value that was extracted and is being evaluated."
+          },
+          "rating": {
+            "type": "string",
+            "enum": ["OK", "NEEDS_REVIEW", "FAIL"],
+            "description": "The quality rating of the extracted content."
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Explanation of the rating based on the schema requirements."
+          }
+        }
+      }
+    },
+    "overallRating": {
+      "type": "string",
+      "enum": ["OK", "NEEDS_REVIEW", "FAIL"],
+      "description": "The aggregate, final rating for the entire extracted Brand Kit."
+    },
+    "summary": {
+      "type": "string",
+      "description": "High-level summary of the semantic quality of the extracted brand kit."
+    }
+  }
+}

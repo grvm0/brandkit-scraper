@@ -1,10 +1,10 @@
-import { generateObject } from 'ai';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getModel } from './llm-provider.js';
+import { getModel, safeGenerateObject } from './llm-provider.js';
+import { logLLMCall } from './logger.js';
 
 dotenv.config();
 
@@ -31,14 +31,22 @@ export async function evaluateBrandKit(brandKitData) {
   const schemaPath = path.join(__dirname, 'brand_identity_schema.json');
   const schemaData = fs.readFileSync(schemaPath, 'utf8');
 
+  const evalSchemaPath = path.join(__dirname, 'evaluation_schema.json');
+  const evalSchemaData = fs.readFileSync(evalSchemaPath, 'utf8');
+
   const prompt = `
     You are a strict, expert Brand Strategist and QA Engineer.
     I have extracted a brand kit from a company's website into a JSON structure.
     
-    Your task is to semantically evaluate the extracted "Brand Kit Data" against the expectations defined in the "JSON Schema Specification".
+    Your task is to semantically evaluate the extracted "Brand Kit Data" against the expectations defined in the "Target JSON Schema Specification".
     You must determine if the extracted content logically makes sense, is high quality, and adheres to the descriptions in the schema.
     
-    JSON Schema Specification:
+    CRITICAL INSTRUCTION: You must return ONLY a raw JSON object matching the EVALUATION schema. Do NOT wrap your response in markdown code blocks (\`\`\`json). Just return the raw JSON.
+    
+    The JSON object YOU RETURN must have EXACTLY this structure:
+    ${evalSchemaData}
+    
+    Target JSON Schema Specification (What the data should look like):
     ${schemaData}
     
     Extracted Brand Kit Data:
@@ -48,15 +56,17 @@ export async function evaluateBrandKit(brandKitData) {
   `;
 
   try {
-    const { object } = await generateObject({
+    const { object } = await safeGenerateObject({
       model: getModel(DEFAULT_EVAL_MODEL),
       schema: evaluationSchema,
       prompt: prompt,
       temperature: 0.1 // Low temperature for consistent, strict grading
     });
+    logLLMCall("evaluateBrandKit", DEFAULT_EVAL_MODEL, prompt, object);
     return object;
   } catch (err) {
     console.error("Semantic evaluation failed:", err);
+    logLLMCall("evaluateBrandKit", DEFAULT_EVAL_MODEL, prompt, null, err);
     return null;
   }
 }

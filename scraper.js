@@ -4,11 +4,14 @@ import { extractDesignTokens, extractStaticData } from './extractor.js';
 import { analyzeTextWithLLM, analyzeImagesWithLLM } from './llm.js';
 import { validateBrandKit } from './validator.js';
 import { evaluateBrandKit } from './evaluator.js';
+import { clearLogs, logEvent } from './logger.js';
 
 /**
  * Main scraping function that orchestrates the modular extraction and analysis
  */
 export async function scrapeBrandData(url) {
+  clearLogs(); // Start fresh for this execution
+  logEvent('SCRAPE_STARTED', { url });
   console.log(`Starting extraction for: ${url}`);
   
   // 1. Fetch raw HTML for static analysis
@@ -41,6 +44,7 @@ export async function scrapeBrandData(url) {
   let currentEvaluation = null;
 
   while (attempt <= MAX_RETRIES) {
+    logEvent('ATTEMPT_STARTED', { attempt: attempt + 1, maxRetries: MAX_RETRIES + 1 });
     console.log(`\n--- Synthesis Attempt ${attempt + 1}/${MAX_RETRIES + 1} ---`);
     
     const heroImages = dynamicData?.heroImages || [];
@@ -90,8 +94,16 @@ export async function scrapeBrandData(url) {
     // 7. Validate output structure (Ajv)
     validateBrandKit(currentBrandKit);
 
+    // Save the intermediate brand kit before evaluation
+    fs.writeFileSync(`brand_kit_attempt_${attempt + 1}.json`, JSON.stringify(currentBrandKit, null, 2));
+
     // 8. Semantic Evaluation (LLM)
     currentEvaluation = await evaluateBrandKit(currentBrandKit);
+
+    // Save the intermediate evaluation
+    if (currentEvaluation) {
+      fs.writeFileSync(`evaluation_attempt_${attempt + 1}.json`, JSON.stringify(currentEvaluation, null, 2));
+    }
 
     if (currentEvaluation && currentEvaluation.overallRating === 'OK') {
       console.log('QA Evaluation succeeded with OK rating. Ending loop.');
@@ -120,10 +132,12 @@ export async function scrapeBrandData(url) {
       });
     }
 
+    logEvent('ATTEMPT_ENDED', { attempt: attempt + 1, rating: currentEvaluation?.overallRating, feedbackProvided: textFeedback || imageFeedback ? true : false });
     attempt++;
   }
   // --- END AGENTIC FEEDBACK LOOP ---
 
+  logEvent('SCRAPE_ENDED', { finalRating: currentEvaluation?.overallRating, totalAttempts: attempt });
   return { brandKit: currentBrandKit, evaluation: currentEvaluation };
 }
 
