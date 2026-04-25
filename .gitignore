@@ -2,3 +2,8 @@ node_modules/
 venv/
 .env
 brand_kit.json
+brand_kit_attempt_1.json
+brand_kit_attempt_2.json
+evaluation_attempt_1.json
+evaluation_attempt_2.json
+llm_logs.jsonl

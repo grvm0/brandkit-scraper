@@ -79,10 +79,11 @@ export MAX_EVAL_RETRIES="3"
 npm start https://example.com
 ```
 
-### Example: Using Local Models (Ollama, LM Studio)
-You can point the OpenAI provider to any custom `baseURL` to interact with local, open-source models:
+### Running with Local Models (Ollama, LM Studio)
+The universal LLM adapter natively supports OpenAI-compatible local APIs. You can route extraction and evaluation to local open-source models without needing an API key:
 ```bash
 export LLM_BASE_URL="http://localhost:11434/v1"
-export LLM_MODEL="llama3"
-npm start https://example.com
+export LLM_MODEL="qwen2.5:3b"
+export LLM_EVAL_MODEL="llama3.2:3b"
+npm start https://www.typeface.ai
 ```
