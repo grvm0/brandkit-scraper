@@ -22,7 +22,7 @@ The project utilizes a hybrid extraction approach, splitting the workload betwee
 3. **Dynamic Pass**: `extractor.js` uses Playwright to sample DOM elements (`h1`, `button`, etc.) and extracts the computed primary/secondary colors and font families. It also finds the largest hero/product images.
 4. **AI Synthesis**: `llm.js` takes the text and images and uses `generateObject` to prompt the configured LLM (defaulting to `gpt-4o`) to define the tone of voice, do-not-use words, mission statement, and imagery vibe.
 5. **Validation**: `validator.js` runs a strict structural check against the JSON schema using Ajv.
-6. **Agentic Semantic Evaluation**: `evaluator.js` uses a *secondary* LLM model (defaulting to `claude-3-5-sonnet-20240620`) to review the extracted `brand_kit.json` and grade it ('OK', 'NEEDS_REVIEW', 'FAIL').
+6. **Agentic Semantic Evaluation**: `evaluator.js` uses the same LLM model (or a separate one via `LLM_EVAL_MODEL`) to review the extracted `brand_kit.json` and grade it ('OK', 'NEEDS_REVIEW', 'FAIL').
 7. **Self-Correction Loop**: If the evaluator flags issues, the orchestration script automatically pipes those specific critiques back to the synthesis LLM for a retry. This loop continues until it receives an 'OK' rating or hits the `MAX_EVAL_RETRIES` limit.
 8. **Output**: Both `brand_kit.json` and `brand_kit_evaluation.json` are saved to disk.
 
@@ -71,19 +71,26 @@ npm start https://example.com
 ```
 
 ### Overriding the Evaluation Model & Retry Limits
-By default, the scraper uses `claude-3-5-sonnet-20240620` to semantically evaluate the output and provides feedback up to 2 times. You can change the model and the max retry limit:
+By default, the evaluation model is the same as `LLM_MODEL`. For cross-model validation (recommended for production), you can override it with `LLM_EVAL_MODEL`. The max retry limit defaults to 2:
 ```bash
 export LLM_MODEL="gpt-4o"
-export LLM_EVAL_MODEL="claude-3-5-sonnet-20240620"
+export LLM_EVAL_MODEL="claude-3-5-sonnet-20240620"  # Optional: use a different model for QA
 export MAX_EVAL_RETRIES="3"
 npm start https://example.com
 ```
 
 ### Running with Local Models (Ollama, LM Studio)
-The universal LLM adapter natively supports OpenAI-compatible local APIs. You can route extraction and evaluation to local open-source models without needing an API key:
+The universal LLM adapter natively supports OpenAI-compatible local APIs. You can route extraction and evaluation to local open-source models without needing an API key. Both `LLM_MODEL` and evaluation will use the same model by default:
 ```bash
 export LLM_BASE_URL="http://localhost:11434/v1"
 export LLM_MODEL="qwen2.5:3b"
-export LLM_EVAL_MODEL="llama3.2:3b"
+npm start https://www.typeface.ai
+```
+
+To use a separate model for evaluation:
+```bash
+export LLM_BASE_URL="http://localhost:11434/v1"
+export LLM_MODEL="qwen2.5:3b"
+export LLM_EVAL_MODEL="qwen2.5-coder:14b"
 npm start https://www.typeface.ai
 ```

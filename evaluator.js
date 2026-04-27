@@ -11,8 +11,8 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Default to a different model (Claude 3.5 Sonnet) to prevent echo chamber validation
-const DEFAULT_EVAL_MODEL = process.env.LLM_EVAL_MODEL || 'claude-3-5-sonnet-20240620';
+// Default to the same model as extraction. Override with LLM_EVAL_MODEL for cross-model validation.
+const DEFAULT_EVAL_MODEL = process.env.LLM_EVAL_MODEL || process.env.LLM_MODEL || 'gpt-4o';
 
 const evaluationSchema = z.object({
   evaluations: z.array(z.object({
